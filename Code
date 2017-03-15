@@ -1,0 +1,87 @@
+import csv
+%matplotlib inline
+import numpy as np
+import pandas as pd
+import scipy.stats as stats
+import matplotlib.pyplot as plt
+import sklearn
+import statsmodels.api as sm
+from matplotlib import rcParams
+from sklearn import preprocessing, cross_validation, svm
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import log_loss, accuracy_score
+
+train = pd.read_csv("train.csv")
+test = pd.read_csv("test.csv")
+
+train.describe()
+train.var15.unique()  # actual value of unique points in column
+train.var15.nunique() # total number of unique points in column
+train.TARGET[train.TARGET ==1]
+train.groupby('TARGET').size()  # count of each groupby identity
+train.groupby('TARGET').count()
+train.groupby('TARGET').mean()
+
+columns_names = train.columns
+train.columns_names.nunique()
+
+
+   # no. of unique elements in each column 
+   train.T.apply(lambda x: x.nunique(), axis=1)
+   # or use this
+   X = train.apply(lambda x: x.nunique(), axis=0)
+   y = X.index[X>50]
+   y.nunique() # 371 columns reduced to 85 columns
+
+
+train_data = train[y]
+            label = train.TARGET
+            label = label.values.ravel()
+            test_data = test[y]
+            ID = test.ID
+
+#Logistic regression
+lgr = LogisticRegression()
+lgr.fit(train_data,label)
+prediction = lgr.predict(test_data)
+result=pd.DataFrame(prediction)
+result.to_csv('testResult.csv', index = True, index_label = ['ID','TARGET'] )    
+
+# SVM
+crime_svm = svm.SVC(kernel='linear')
+crime_svm.fit(train_data,label)
+predicted = np.array(crime_svm.predict(test_data))
+result=pd.DataFrame(predicted)
+result.to_csv('testResultsvm.csv', index = True, index_label = 'ID' ) 
+
+# Random Forest
+crime_rf = RandomForestClassifier()
+crime_rf.fit(train_data,label)
+prediction = np.array(crime_rf.predict(test_data))
+result=pd.DataFrame([ID],[prediction])
+result.to_csv('testResultrf.csv', index = True, index_label = ['ID','TARGET'] )   
+
+[split_train_data, split_test_data, split_train_labels, split_test_labels] = cross_validation.train_test_split(train_data,label, test_size=0.3)
+
+lgr = LogisticRegression(C=1e5)
+lgr.fit(split_train_data,split_train_labels)
+prediction = lgr.predict(split_test_data)
+print lgr.score(split_test_data, split_test_labels)
+accuracy_score(split_test_labels, prediction) 
+
+# SVM
+crime_svm = svm.SVC(kernel='linear')
+crime_svm.fit(split_train_data,split_train_label)
+prediction = np.array(crime_svm.predict(split_test_data))
+log_loss(split_test_labels, prediction)
+crime_svm.score(split_test_data, split_test_labels)
+accuracy_score(split_test_labels, prediction) 
+
+# Random Forest
+crime_rf = RandomForestClassifier()
+crime_rf.fit(split_train_data,split_train_label)
+prediction = np.array(crime_rf.predict(split_test_data))
+log_loss(split_test_labels, prediction)
+accuracy_score(split_test_labels, prediction)
